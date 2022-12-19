@@ -1,87 +1,25 @@
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import CarModel
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView
+
 from .serializers import CarSerializer
+from .models import CarModel
 
 
+class CarListCreateView(ListAPIView):
+    queryset = CarModel.objects.all()
+    serializer_class = CarSerializer
+
+    def get_queryset(self):
+        query = self.request.query_params.dict()
+
+        queryset = super().get_queryset()
+
+        if (year := query.get('lt_year')) and year.isdigit():
+            queryset = queryset.filter(year__lt=year)
+        if (auto_park_id := query.get('auto_park_id')) and auto_park_id.isdigit():
+            queryset = queryset.filter(auto_park_id=auto_park_id)
+        return queryset
 
 
-class CarListCreateView(APIView):
-    def get(self, *args, **kwargs):
-        cars = CarModel.objects.all()
-        serializer = CarSerializer(cars, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
-    def post(self, *args, **kwargs):
-        data =  self.request.data
-        serializer = CarSerializer(data=data)
-
-        if not serializer.is_valid():
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response(serializer.data, status.HTTP_201_CREATED)
-
-
-class CarRetrieveDestrouUpdatrView(APIView):
-    def get(self, *args, **kwargs):
-        pk = kwargs.get('pk')
-
-
-        exists =  CarModel.objects.filter(pk=pk).exists()
-
-        if not exists:
-            return Response('Not Found', status.HTTP_404_NOT_FOUND)
-
-
-        car = CarModel.objects.get(pk=pk)
-        serializer =  CarSerializer(car)
-        return Response(serializer.data)
-    def put(self, *args, **kwargs):
-        pk = kwargs.get('pk')
-        data = self.request.data
-
-        exists = CarModel.objects.filter(pk=pk).exists()
-
-        if not exists:
-            return Response('Not Found', status.HTTP_404_NOT_FOUND)
-
-        car = CarModel.objects.get(pk=pk)
-        serializer = CarSerializer(car, data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-        return Response(serializer.data)
-
-    def patch(self, *args, **kwargs):
-        pk = kwargs.get('pk')
-        data = self.request.data
-
-        exists = CarModel.objects.filter(pk=pk).exists()
-
-        if not exists:
-            return Response('Not Found', status.HTTP_404_NOT_FOUND)
-
-        car = CarModel.objects.get(pk=pk)
-        serializer = CarSerializer(car, data, partial=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-        return Response(serializer.data)
-    def delete(self, *args, **kwargs):
-        pk = kwargs.get('pk')
-
-
-        exists = CarModel.objects.filter(pk=pk).exists()
-
-        if not exists:
-            return Response('Not Found', status.HTTP_404_NOT_FOUND)
-
-        CarModel.objects.get(pk=pk).delete()
-        return Response(status.HTTP_204_NO_CONTENT)
-
-
-
-
-
+class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    queryset = CarModel.objects.all()
+    serializer_class = CarSerializer
