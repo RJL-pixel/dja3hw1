@@ -7,3 +7,4 @@ class CarSerializer(ModelSerializer):
     class Meta:
         model = CarModel
         exclude = ('auto_parks',)
+
